@@ -61,8 +61,8 @@ const int COLON_INTERVAL[2][2] = {
 };
 
 
-const int DIGIT_STARTING_SEGMENT_INDEX[4] = {2, 9, 22, 29};
-const int COLON_STARTING_INDEX = 16;
+const int DIGIT_STARTING_SEGMENT_INDEX[4] = {2, 9, 24, 31};
+const int COLON_STARTING_INDEX = 22;
 
 const int START_POS = 0;
 const int COLON = 2;
