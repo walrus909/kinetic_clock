@@ -1,0 +1,140 @@
+/*
+  Controlling a servo position using a potentiometer (variable resistor)
+  by Michal Rinott < http://www.arduino.cc/en/Tutorial/Knob
+>
+
+  modified on 8 Nov 2013
+  by Scott Fitzgerald
+   http://www.arduino.cc/en/Tutorial/Knob
+
+*/
+
+#include <Servo.h>
+
+Servo myservo;  // create servo object to control a servo
+
+int potpin = 0;  // analog pin used to connect the potentiometer
+int val;    // variable to read the value from the analog pin
+
+
+const int SEGMENT_INTERVALS[4][7][2] = {
+  {
+    {146, 57},
+    {147, 62},
+    {138, 51},
+    {160, 88},
+    {135, 64},
+    {149, 70},
+    {139, 58}
+  },
+  {
+    {131, 45},
+    {150, 53},
+    {138, 52},
+    {146, 61},
+    {151, 70},
+    {140, 57},
+    {137, 48}
+  },
+  {
+    {157, 73},
+    {156, 70},
+    {135, 50},
+    {137, 52},
+    {133, 50},
+    {133, 50},
+    {168, 73}
+  },
+  {
+    {131, 52},
+    {147, 61},
+    {131, 51},
+    {128, 43},
+    {125, 41},
+    {104, 24},
+    {137, 60}
+  }
+};
+const int COLON_INTERVAL[2][2] = {
+  {127, 45},
+  {156, 81},
+};
+
+const int DIGIT_STARTING_SEGMENT_INDEX[4] = {2, 9, 22, 29};
+const int COLON_STARTING_INDEX = 16;
+
+const int SEGMENTS_PER_DIGIT = 7;
+const int DIGITS = 4;
+const int START_POS = 1;
+const int COLON = 2;
+
+
+
+
+int segment = 12;
+
+void setup() {
+
+  Servo servos[DIGITS][SEGMENTS_PER_DIGIT];
+  Servo colonServos[COLON];
+
+  for (int i = 0; i < DIGITS; i++) {
+    for (int j = 0; j < SEGMENTS_PER_DIGIT; j++) {
+      int offset = DIGIT_STARTING_SEGMENT_INDEX[i];
+      servos[i][j].attach(j + offset);
+      servos[i][j].write(SEGMENT_INTERVALS[i][j][START_POS]);
+    }
+      delay(1000);
+
+    for (int j = 0; j < SEGMENTS_PER_DIGIT; j++) {
+      servos[i][j].detach();
+    }
+  }
+
+  for (int i = 0; i < COLON; i++) {
+    colonServos[i].attach(i + COLON_STARTING_INDEX);
+    colonServos[i].write(COLON_INTERVAL[i][START_POS]);
+  }
+  delay(1000);
+  for (int i = 0; i < COLON; i++) {
+    colonServos[i].detach();
+  }
+
+  myservo.attach(segment);  // attaches the servo on pin 9 to the servo object
+  Serial.begin(9600); // open the serial port at 9600 bps:
+
+
+}
+
+int inputParse(String input) {
+  // Clean number
+  int angle = input.toInt();
+  if (angle > 180 || angle < 0) {
+    angle = 0;
+  }
+  return angle;
+}
+
+void loop() {
+
+  if (Serial.available()) {
+    segment = inputParse(Serial.readString());
+    Serial.print("Attaching: " );
+    Serial.println(segment);
+    myservo.detach();
+    myservo.attach(segment);
+  }
+
+
+  if (myservo.attached()) {
+    val = analogRead(potpin);            // reads the value of the potentiometer (value between 0 and 1023)
+    val = map(val, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180)
+    myservo.write(val);                  // sets the servo position according to the scaled value
+
+    Serial.print("Seg: " );
+    Serial.print(segment);
+    Serial.print(" Pot: " );
+    Serial.println(val);
+    delay(15);                           // waits for the servo to get there
+  }
+}
