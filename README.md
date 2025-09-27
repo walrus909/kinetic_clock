@@ -20,10 +20,24 @@ RTC Module connections to Keyestudio Digital Sensor Shield:
 Install Library RTCLib in Arduino IDE
 
 Determine which servoes go to which Digital IO pins
--update index numbers in code
+- make a visual map
+- update index numbers in code
 
-Calibrate each servo to determine two numbers:
-- Out position that is level with the rest and maintains gear engagement for retract
-- In position that sits flush and does not jam servo (bottom out)
+Calibrate each servo to determine two numbers associated with each servo:
+- ON_ANGLES position that is level with the rest and maintains gear engagement for retract
+- OFF_ANGLES position that sits flush and does not jam servo (bottom out)
+  
+- connect servo tester (with potentiometer) to pin 16 with Vcc and GND
+- Open 2 programs: CLOCK_CALIB and also segment_Clock_RTC02) in Arduino IDE
+- Connect USB cable to PC and then turn serial monitor on in IDE Tools menu
+- remove all segments
+- Start at first servo in array (e.g. 2)
+- in CLOCK_CALIB, change variable ServoInputPin to the correspnding servo index to calibrate (e.g. 2)
+- turn potentiometer to extreme counterclockwise position to rotate gear to furthest out point
+- insert segment into socket while turning potentiometer clockwise to catch the gears and pull segment in to face
+- continue turning potentiometer until segment sits flush with face.
+- Read the number in the serial output stream and enter that in code segment_clock_RTC02 in the respective servo position (e.g. 2) of OFF_ANGLES array
+- turn the potentiometer counterclockwise until the segment is pushed out to the desired distance from face.  Try to get all segments to same level
+- read the number in the serial output stream and enter that in code segment_clock_RTC02 in the respective servo position (e.g. 2) of ON_ANGLES array
+- go to next servo in arary (e.g. 3) and repeat
 
-Update numbers in to code 
