@@ -19,32 +19,42 @@ Servo servos[30];
 */  
 const int servoPins[30] = {
                             2, 3, 4, 5, 6, 7, 8, 
-                            9, 10, 11, 12, 16, 14, 15,
+                            9, 10, 11, 12, 13, 14, 15,
                             24, 25, 26, 27, 28, 29, 30, 
                             31, 32, 33, 34, 35, 36, 37, 
                             22, 23
                           };
 
 const int ON_ANGLES[30] = {
-                            90, 100, 85, 100, 97, 100, 102, 
-                            100, 100, 100, 105, 95, 110, 100,
-                            105, 95, 90, 85, 105, 100, 100, 
-                            100, 100, 90, 100, 100, 80, 90, 
-                            80, 100
+                            82, 95, 90, 86, 77, 81, 85, 
+                            86, 95, 86, 86, 86, 108, 100,
+                            82, 95, 95, 72, 82, 95, 68, 
+                            90, 82, 82, 90, 86,86, 95, 
+                            103, 104
                           };
 const int OFF_ANGLES[30] = {
-                              150, 160, 145, 160, 157, 160, 162, 
-                              160, 160, 160, 160, 160, 170, 160,
-                              165, 160, 155, 150, 165, 165, 160, 
-                              160, 160, 150, 160, 160, 140, 150, 
-                              150, 160
+                              140, 154, 154, 149, 149, 145, 149, 
+                              144, 167, 140, 140, 144, 162, 158,
+                              154, 154, 154, 144, 144, 162, 131, 
+                              149, 154, 154, 159, 154, 150, 158, 
+                              172, 167
                             };
+// digitConfig is a map of each of the 7 segnments where 1=on, 0 = 0ff for each number to display
 const int digitConfig[10][7] = {
-    {1, 1, 1, 1, 1, 1, 0}, {0, 1, 1, 0, 0, 0, 0}, {1, 1, 0, 1, 1, 0, 1}, {1, 1, 1, 1, 0, 0, 1},
-    {0, 1, 1, 0, 0, 1, 1}, {1, 0, 1, 1, 0, 1, 1}, {1, 0, 1, 1, 1, 1, 1}, {1, 1, 1, 0, 0, 0, 0},
-    {1, 1, 1, 1, 1, 1, 1}, {1, 1, 1, 1, 0, 1, 1}};
+    {1, 1, 1, 1, 1, 1, 0},  // 0
+    {0, 1, 1, 0, 0, 0, 0},  // 1
+    {1, 1, 0, 1, 1, 0, 1},  // 2
+    {1, 1, 1, 1, 0, 0, 1},  // 3
+    {0, 1, 1, 0, 0, 1, 1},  // 4
+    {1, 0, 1, 1, 0, 1, 1},  // 5
+    {1, 0, 1, 1, 1, 1, 1},  // 6
+    {1, 1, 1, 0, 0, 0, 0},  // 7
+    {1, 1, 1, 1, 1, 1, 1},  // 8
+    {1, 1, 1, 1, 0, 1, 1}}; // 9
 
 int lastServoPositions[30];
+bool format12h = true;       //set to false if you want 24h format
+bool isPM;
 
 void setup() {
   Serial.begin(9600);
@@ -56,7 +66,7 @@ void setup() {
 
   if (rtc.lostPower()) {
     Serial.println("RTC lost power, setting the time!");
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));     //get the last compilation time and date
   }
 
   // Display initial time and DST status
@@ -71,12 +81,36 @@ void loop() {
   int minutes = now.minute();
   int seconds = now.second();
 
-  if (hours >= 7 && hours < 23) {
+  if (format12h) {
+    // convert from 24 to 12h format
+    if (hours == 0) {
+      hours = 12;         //midnight
+      isPM = false;
+    } else if (hours <12) {
+      hours = hours;      //morning
+      isPM = false; 
+    } else if (hours == 12) {
+      hours = 12;         //noon
+      isPM = true;
+    } else {
+      hours = hours -12;  //afternoon
+      isPM = true;
+    }
+  }
+
+
+  if (hours >= 0 && hours < 23) {
     for (int i = 0; i < 30; i++) {
       servos[i].attach(servoPins[i]);
     }
 
-    displayDigit(hours / 10, 0);
+    // don't display leading zero if 12h format
+    if (format12h && hours <10 && isPM) {
+      clearDigit(0);
+    } else {
+      displayDigit(hours / 10, 0);
+    }
+ 
     displayDigit(hours % 10, 1);
     displayDigit(minutes / 10, 2);
     displayDigit(minutes % 10, 3);
@@ -161,10 +195,15 @@ void printTimeAndDSTInfo() {
 }
 
 void displayDigit(int digit, int position) {
+  // for each segment in a digit
   for (int i = 0; i < 7; i++) {
-    int servoIndex = position * 7 + i;
+     // determine the servo to move bsaed on the segment(i) and position (hh:mm)
+    int servoIndex = position * 7 + i;   
+
+     // determine whether to pop out or push in this segment based on digitConfig map
     int targetAngle = (digitConfig[digit][i] == 1) ? ON_ANGLES[servoIndex] : OFF_ANGLES[servoIndex];
 
+      // if the segment isn't already in position, move it.
     if (targetAngle != lastServoPositions[servoIndex]) {
       moveServoSmooth(servos[servoIndex], targetAngle);
       lastServoPositions[servoIndex] = targetAngle;
@@ -180,7 +219,24 @@ void moveServoSmooth(Servo &servo, int targetAngle) {
     servo.write(angle);
     delay(7);
   }
-
+  //Serial.print("moving servo ");
+  //Serial.print(Servo);
   servo.write(targetAngle);
 }
 
+void clearDigit(int position) {
+  //flatten out the entire digit
+  for (int i = 0; i < 7; i++) {
+     // determine the servo to move bsaed on the segment(i) and position (hh:mm)
+    int servoIndex = position * 7 + i;   
+
+     // set to off position
+    int targetAngle = OFF_ANGLES[servoIndex];
+
+      // if the segment isn't already in position, move it.
+    if (targetAngle != lastServoPositions[servoIndex]) {
+      moveServoSmooth(servos[servoIndex], targetAngle);
+      lastServoPositions[servoIndex] = targetAngle;
+    }  
+  }
+}
