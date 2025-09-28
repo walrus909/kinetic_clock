@@ -1,4 +1,6 @@
-Arduino MEGA
+ELEGOO (Arduino MEGA2560)
+4 kB EEPROM storage
+
 Keystudio MEGA Sensor Shield v1.3
 https://wiki.keyestudio.com/Ks0006_MEGA_Sensor_Shield_V1
 
@@ -17,7 +19,14 @@ RTC Module connections to Keyestudio Digital Sensor Shield:
 - SDA on Digital 20
 - SCL on Digital 21
 
-Install Library RTCLib in Arduino IDE
+Servo test board connections to Keystudio Digital Sensor Shield:
+- Signal on Digital 18 (must be an interrupt pin)
+- GND any GND
+- Vcc and Vcc (5v)
+  
+Install Libraries in Arduino IDE
+- RTCLib
+- ServoInput
 
 Determine which servoes go to which Digital IO pins
 - make a visual map
