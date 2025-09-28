@@ -105,7 +105,7 @@ void loop() {
     }
 
     // don't display leading zero if 12h format
-    if (format12h && hours <10 && isPM) {
+    if (format12h && hours <10 ) {
       clearDigit(0);
     } else {
       displayDigit(hours / 10, 0);
