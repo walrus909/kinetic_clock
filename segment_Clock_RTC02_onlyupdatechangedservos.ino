@@ -1,6 +1,11 @@
+// bug going from 0 to 1, segment 31 pops out instead of in
+// bug when uploading time, it is off by 30 seconds
+
 #include <Wire.h>
 #include <RTClib.h>
 #include <Servo.h>
+#include <string>
+#include <iostream>
 
 RTC_DS3231 rtc;
 
@@ -239,4 +244,30 @@ void clearDigit(int position) {
       lastServoPositions[servoIndex] = targetAngle;
     }  
   }
+
+  string subtractUploadTime(std::string compileTime) {
+    //given a time string, subtract a set number of seconds it takes to upload and reset the RTC
+    std::string newTime;
+    int secondsGap = 30;
+    
+    // get hrs, mins, secs from time string (hh:mm:ss)
+    String strSec = compileTime.substring(compileTime.length()-2);
+    String strMin = compileTime.substring(compileTime.length()-5,2);
+    String strHrs = compileTime.substring(0,2);
+    //convert to int
+    int intSec = std::stoi(strSec);
+    int intMin = std::stio(strMin);
+
+    if (intSec >= secondsGap) {
+      intSec = intSec - secondsGap; //subtract gap
+    } else {
+      intMin = intMin - 1; //  subtract 1 from minute, 
+      intSec = 60 - abs(secondsGap - intMin); // find abs between gap and minutes,subtract from 60
+    }
+    // new time 
+    newTime = strHrs + ":" + std::to_string(intMin) + ":" + std::to_string(intSec);
+    return newTime;
+  } 
+  
 }
+
