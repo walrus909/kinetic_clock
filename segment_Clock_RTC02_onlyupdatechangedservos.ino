@@ -71,7 +71,9 @@ void setup() {
 
   if (rtc.lostPower()) {
     Serial.println("RTC lost power, setting the time!");
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));     //get the last compilation time and date
+    //get compile time
+    String newTimeToSet = subtractUploadTime(F(__TIME__)); 
+    rtc.adjust(DateTime(F(__DATE__),newTimeToSet));     //get the last compilation time and date
   }
 
   // Display initial time and DST status
@@ -270,4 +272,5 @@ void clearDigit(int position) {
   } 
   
 }
+
 
